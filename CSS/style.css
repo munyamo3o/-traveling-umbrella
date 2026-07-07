@@ -179,18 +179,3 @@ strong {
         transform: translateY(100vh);
     }
 }
-
-#loading {
-  width: 100vw;
-  height: 100vh;
-  transition: all 1s;
-  background-color: #0bd;
-}
-.spinner {
-  width: 100px;
-  height: 100px;
-  margin: 200px auto;
-  background-color: #fff;
-  border-radius: 100%;
-  animation: sk-scaleout 1s infinite ease-in-out;
-}
