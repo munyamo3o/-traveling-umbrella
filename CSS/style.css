@@ -163,7 +163,7 @@ strong {
 .flowing-text {
     position: absolute;
     white-space: nowrap;
-    font-size: 24px; /* 少しスマートなサイズに変更 */
+    font-size: 20px; /* 少しスマートなサイズに変更 */
     font-weight: bold;
     color: rgba(255, 255, 255, 0.65); /* 少し透けさせて雨感を演出 */
     text-shadow: 0 2px 8px rgba(0,0,0,0.5);
@@ -178,4 +178,19 @@ strong {
     100% {
         transform: translateY(100vh);
     }
+}
+
+#loading {
+  width: 100vw;
+  height: 100vh;
+  transition: all 1s;
+  background-color: #0bd;
+}
+.spinner {
+  width: 100px;
+  height: 100px;
+  margin: 200px auto;
+  background-color: #fff;
+  border-radius: 100%;
+  animation: sk-scaleout 1s infinite ease-in-out;
 }
