@@ -84,7 +84,7 @@ onSnapshot(q, (snapshot) => {
     });
 });
 
-// ★定期的に文字を流すタイマー（2秒ごとにプールから自動で流す）
+// ★定期的に文字を流すタイマー（1.2秒ごとにプールから自動で流す）
 setInterval(() => {
     if (textPool.length === 0) return;
 
@@ -95,7 +95,7 @@ setInterval(() => {
     if (poolIndex >= textPool.length) {
         poolIndex = 0; // 最後までいったら最初に戻る
     }
-}, 1200); // 2秒
+}, 1200); // 1.2秒
 
 // ボタンクリックとEnterキーのイベント登録
 button.addEventListener('click', sendText);
