@@ -95,7 +95,7 @@ setInterval(() => {
     if (poolIndex >= textPool.length) {
         poolIndex = 0; // 最後までいったら最初に戻る
     }
-}, 3000); // 3秒
+}, 2000); // 2秒
 
 // ボタンクリックとEnterキーのイベント登録
 button.addEventListener('click', sendText);
