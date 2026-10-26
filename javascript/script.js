@@ -36,7 +36,7 @@ const form = document.getElementById('guchi-form');
 
 const colors = ["#38bdf8", "#f97316", "#a855f7", "#22c55e", "#eab308"];
 
-// データベースの愚痴を保持しておく配列
+// デフォルトの愚痴リスト（DBが空の時のバックアップ 兼 初期プール）
 let savedGruchis = [
     "雨でせっかくの予定が飛んじゃった…",
     "お気に入りのスニーカーが浸水して最悪",
@@ -67,7 +67,7 @@ function createRainItem(text, isUserSubmitted = false) {
     item.appendChild(shape);
     item.appendChild(label);
 
-    // X軸のランダム配置（10%〜80%）
+    // X軸のランダム配置（15%〜85%）
     const leftPos = Math.random() * 70 + 15;
     item.style.left = `${leftPos}%`;
 
@@ -83,10 +83,11 @@ function createRainItem(text, isUserSubmitted = false) {
     }, duration * 1000);
 }
 
-// ① 過去の投稿データをFirestoreから読み込む
+// ① Firestoreから過去の全投稿を取得
 async function loadExistingGruchis() {
     try {
-        const q = query(collection(db, "guchis"), orderBy("createdAt", "desc"), limit(50));
+        // createdAt の降順で最新100件を取得（orderByでエラーが出るのを防ぐためシンプルに取得）
+        const q = query(collection(db, "guchis"), limit(100));
         const querySnapshot = await getDocs(q);
         
         const fetchedTexts = [];
@@ -97,18 +98,17 @@ async function loadExistingGruchis() {
             }
         });
 
-        // データがあれば配列を更新（過去の全投稿を蓄積）
+        // 投稿データが存在すれば、初期配列と合体させる
         if (fetchedTexts.length > 0) {
-            savedGruchis = fetchedTexts;
+            savedGruchis = [...fetchedTexts, ...savedGruchis];
         }
     } catch (error) {
-        console.error("データ読み込みエラー:", error);
+        console.error("Firestoreからの読み込みエラー:", error);
     }
 }
 
-// ② ループで過去・最新の投稿を常に降らせ続ける
+// ② ループで常に画面に降らせ続ける
 function startRainLoop() {
-    // 2.2秒ごとに保存されている愚痴の中からランダムに降らせる
     setInterval(() => {
         if (savedGruchis.length > 0) {
             const randomText = savedGruchis[Math.floor(Math.random() * savedGruchis.length)];
@@ -117,31 +117,7 @@ function startRainLoop() {
     }, 2200);
 }
 
-// ③ リアルタイム監視（アクセス中に誰かが新しく投稿した時）
-function listenToNewGruchis() {
-    const q = query(collection(db, "guchis"), orderBy("createdAt", "desc"), limit(1));
-    
-    let isInitialLoad = true;
-    onSnapshot(q, (snapshot) => {
-        if (isInitialLoad) {
-            isInitialLoad = false;
-            return;
-        }
-
-        snapshot.docChanges().forEach((change) => {
-            if (change.type === "added") {
-                const data = change.doc.data();
-                if (data && data.text) {
-                    // 配列に追加して、画面にも即降らせる
-                    savedGruchis.unshift(data.text);
-                    createRainItem(data.text, true);
-                }
-            }
-        });
-    });
-}
-
-// ユーザーの新規投稿処理（Firestoreへ保存）
+// ユーザーの新規投稿処理（Firestoreへ送信＆即時降下）
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const value = textInput.value.trim();
@@ -149,34 +125,32 @@ form.addEventListener('submit', async (e) => {
 
     try {
         textInput.value = '';
-        // 即座に自分の画面で降らせる ＋ ローカル配列に追加
+        
+        // 1. ローカル配列の先頭に追加して即座に降らせる
         savedGruchis.unshift(value);
         createRainItem(value, true);
 
-        // Firebase Firestore へ保存（これで永続化）
+        // 2. Firestoreデータベースへ保存（これでリロード後も残る）
         await addDoc(collection(db, "guchis"), {
             text: value,
             createdAt: serverTimestamp()
         });
+
     } catch (error) {
-        console.error("投稿保存エラー:", error);
+        console.error("Firestoreへの保存エラー:", error);
+        alert("投稿の保存に失敗しました。Firebaseのルール設定を確認してください。");
     }
 });
 
-// 起動時の初期化フロー
+// 起動時の初期化
 window.addEventListener('DOMContentLoaded', async () => {
-    // 1. 過去の愚痴を取得
+    // 過去データをロード
     await loadExistingGruchis();
-    
-    // 2. 初回画面に2〜3個降らせる
-    if (savedGruchis.length > 0) {
-        createRainItem(savedGruchis[0]);
-        setTimeout(() => createRainItem(savedGruchis[1] || savedGruchis[0]), 1000);
-    }
 
-    // 3. 雨のループ処理をスタート
+    // 最初の一回
+    createRainItem(savedGruchis[0]);
+    setTimeout(() => createRainItem(savedGruchis[1] || savedGruchis[0]), 1000);
+
+    // ループ再生スタート
     startRainLoop();
-
-    // 4. 新規投稿のリアルタイム監視を開始
-    listenToNewGruchis();
 });
