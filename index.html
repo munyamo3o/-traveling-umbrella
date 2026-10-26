@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>雨と愚痴 | AME TO GUCHI</title>
-    <link rel="stylesheet" href="CSS/style.css">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- 愚痴と図形が雨のように降ってくるキャンバスエリア -->
+    <!-- 愚痴と図形が雨のように降ってくるエリア -->
     <div id="rain-canvas"></div>
 
     <div class="main-wrapper">
@@ -21,10 +21,10 @@
                     <p class="tagline">雨の日のご憂鬱、ここにこぼしていきませんか。</p>
                 </div>
 
-                <div class="form-group">
-                    <input type="text" id="text-input" placeholder="予定が消えた、靴が濡れた、雨宿りが暇…" maxlength="45">
-                    <button id="send-btn">空へ降らせる</button>
-                </div>
+                <form id="guchi-form" class="form-group" onsubmit="return false;">
+                    <input type="text" id="text-input" placeholder="予定が消えた、靴が濡れた、雨宿りが暇…" maxlength="45" autocomplete="off">
+                    <button type="submit" id="send-btn">空へ降らせる</button>
+                </form>
             </div>
         </section>
 
@@ -69,6 +69,6 @@
         </section>
     </div>
 
-    <script src="javascript/script.js" type="module"></script>
+    <script src="script.js"></script>
 </body>
 </html>
