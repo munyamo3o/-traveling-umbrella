@@ -6,13 +6,14 @@ import {
     collection, 
     addDoc, 
     onSnapshot, 
+    getDocs,
     query, 
     orderBy, 
     limit, 
     serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-// 更新された Firebase 設定
+// Firebase 設定
 const firebaseConfig = {
   apiKey: "AIzaSyA8P0etGc8wSpwLVrEOSKyx1yKgZ6962eE",
   authDomain: "text-river.firebaseapp.com",
@@ -35,8 +36,8 @@ const form = document.getElementById('guchi-form');
 
 const colors = ["#38bdf8", "#f97316", "#a855f7", "#22c55e", "#eab308"];
 
-// 初期表示用ダミー（Firestoreが空の場合やフォールバック用）
-const initialGruchis = [
+// データベースの愚痴を保持しておく配列
+let savedGruchis = [
     "雨でせっかくの予定が飛んじゃった…",
     "お気に入りのスニーカーが浸水して最悪",
     "傘忘れて今年4本目のビニール傘購入",
@@ -66,23 +67,81 @@ function createRainItem(text, isUserSubmitted = false) {
     item.appendChild(shape);
     item.appendChild(label);
 
-    // X軸のランダム配置
-    const leftPos = Math.random() * 80 + 10;
+    // X軸のランダム配置（10%〜80%）
+    const leftPos = Math.random() * 70 + 15;
     item.style.left = `${leftPos}%`;
 
-    // 落下アニメーション時間
+    // 落下アニメーション時間（7〜11秒）
     const duration = Math.random() * 4 + 7;
     item.style.animationDuration = `${duration}s`;
 
     rainContainer.appendChild(item);
 
-    // アニメーション終了後に削除
+    // アニメーション終了後にDOMから削除
     setTimeout(() => {
         item.remove();
     }, duration * 1000);
 }
 
-// 投稿機能（Firestore に送信）
+// ① 過去の投稿データをFirestoreから読み込む
+async function loadExistingGruchis() {
+    try {
+        const q = query(collection(db, "guchis"), orderBy("createdAt", "desc"), limit(50));
+        const querySnapshot = await getDocs(q);
+        
+        const fetchedTexts = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            if (data && data.text) {
+                fetchedTexts.push(data.text);
+            }
+        });
+
+        // データがあれば配列を更新（過去の全投稿を蓄積）
+        if (fetchedTexts.length > 0) {
+            savedGruchis = fetchedTexts;
+        }
+    } catch (error) {
+        console.error("データ読み込みエラー:", error);
+    }
+}
+
+// ② ループで過去・最新の投稿を常に降らせ続ける
+function startRainLoop() {
+    // 2.2秒ごとに保存されている愚痴の中からランダムに降らせる
+    setInterval(() => {
+        if (savedGruchis.length > 0) {
+            const randomText = savedGruchis[Math.floor(Math.random() * savedGruchis.length)];
+            createRainItem(randomText);
+        }
+    }, 2200);
+}
+
+// ③ リアルタイム監視（アクセス中に誰かが新しく投稿した時）
+function listenToNewGruchis() {
+    const q = query(collection(db, "guchis"), orderBy("createdAt", "desc"), limit(1));
+    
+    let isInitialLoad = true;
+    onSnapshot(q, (snapshot) => {
+        if (isInitialLoad) {
+            isInitialLoad = false;
+            return;
+        }
+
+        snapshot.docChanges().forEach((change) => {
+            if (change.type === "added") {
+                const data = change.doc.data();
+                if (data && data.text) {
+                    // 配列に追加して、画面にも即降らせる
+                    savedGruchis.unshift(data.text);
+                    createRainItem(data.text, true);
+                }
+            }
+        });
+    });
+}
+
+// ユーザーの新規投稿処理（Firestoreへ保存）
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const value = textInput.value.trim();
@@ -90,45 +149,34 @@ form.addEventListener('submit', async (e) => {
 
     try {
         textInput.value = '';
-        // 即座に自分の画面で落とす
+        // 即座に自分の画面で降らせる ＋ ローカル配列に追加
+        savedGruchis.unshift(value);
         createRainItem(value, true);
 
-        // Firebase Firestore へ保存
+        // Firebase Firestore へ保存（これで永続化）
         await addDoc(collection(db, "guchis"), {
             text: value,
             createdAt: serverTimestamp()
         });
     } catch (error) {
-        console.error("投稿エラー:", error);
+        console.error("投稿保存エラー:", error);
     }
 });
 
-// リアルタイム同期（誰かが投稿したら全ユーザーに降らせる）
-const q = query(collection(db, "guchis"), orderBy("createdAt", "desc"), limit(30));
-
-let isFirstLoad = true;
-
-onSnapshot(q, (snapshot) => {
-    if (snapshot.empty && isFirstLoad) {
-        // DBが空の場合はサンプルを定期的に降らせる
-        setInterval(() => {
-            const randomText = initialGruchis[Math.floor(Math.random() * initialGruchis.length)];
-            createRainItem(randomText);
-        }, 2500);
-        isFirstLoad = false;
-        return;
+// 起動時の初期化フロー
+window.addEventListener('DOMContentLoaded', async () => {
+    // 1. 過去の愚痴を取得
+    await loadExistingGruchis();
+    
+    // 2. 初回画面に2〜3個降らせる
+    if (savedGruchis.length > 0) {
+        createRainItem(savedGruchis[0]);
+        setTimeout(() => createRainItem(savedGruchis[1] || savedGruchis[0]), 1000);
     }
 
-    snapshot.docChanges().forEach((change) => {
-        if (change.type === "added") {
-            const data = change.doc.data();
-            // 投稿データのテキストが存在すれば降らせる
-            if (data && data.text) {
-                setTimeout(() => {
-                    createRainItem(data.text);
-                }, Math.random() * 2000);
-            }
-        }
-    });
-    isFirstLoad = false;
+    // 3. 雨のループ処理をスタート
+    startRainLoop();
+
+    // 4. 新規投稿のリアルタイム監視を開始
+    listenToNewGruchis();
 });
