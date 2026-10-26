@@ -1,15 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&display=swap');
+
+:root {
+    --bg-color: #f4f6f8;
+    --text-color: #2b2b2b;
+    --accent-blue: #38bdf8;
+    --accent-orange: #f97316;
+    --accent-purple: #a855f7;
+    --accent-green: #22c55e;
+    --accent-yellow: #eab308;
+    --border-color: #1e293b;
+}
+
+* {
+    box-sizing: border-box;
+}
+
 body, html {
     margin: 0;
     padding: 0;
     width: 100%;
     height: 100%;
-    background-color: #12161a; /* どんよりとした雨空をイメージした深い紺グレー */
-    font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
-    color: #ffffff;
+    background-color: var(--bg-color);
+    font-family: 'Zen Maru Gothic', 'Hiragino Kaku Gothic ProN', sans-serif;
+    color: var(--text-color);
+    overflow: hidden;
 }
 
-/* 文字が流れるエリア（背景として固定） */
-#river-container {
+/* 雨のように降る背景キャンバス */
+#rain-canvas {
     position: fixed;
     top: 0;
     left: 0;
@@ -17,9 +35,10 @@ body, html {
     height: 100%;
     z-index: 1;
     pointer-events: none;
+    overflow: hidden;
 }
 
-/* スクロールさせるためのラッパー */
+/* メインラッパー */
 .main-wrapper {
     position: relative;
     z-index: 2;
@@ -28,154 +47,203 @@ body, html {
     scroll-behavior: smooth;
 }
 
-/* 最初の画面（中央に入力ボックスがあるエリア） */
+/* ヒーローエリア */
 .hero-section {
+    min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
+    padding: 20px;
+}
+
+.card-container {
+    background: rgba(255, 255, 255, 0.92);
+    border: 3px solid var(--border-color);
+    border-radius: 24px;
+    padding: 45px 35px;
+    max-width: 480px;
     width: 100%;
-}
-
-/* 中央の入力フォーム一式 */
-.input-container {
     text-align: center;
-    background: rgba(18, 22, 26, 0.75); /* 背景を少しだけ透過 */
-    padding: 40px;
-    border-radius: 16px;
-    backdrop-filter: blur(8px); /* 後ろを流れる文字をオシャレにぼかす */
-    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    max-width: 500px;
-    width: 90%;
+    box-shadow: 8px 8px 0px var(--border-color);
+    backdrop-filter: blur(8px);
 }
 
-.input-container h1 {
+.sub-title {
+    font-size: 0.85rem;
+    letter-spacing: 0.25em;
+    color: #64748b;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.logo-area h1 {
     font-size: 2.5rem;
-    margin-top: 0;
-    margin-bottom: 10px;
-    letter-spacing: 0.2em;
-    font-weight: 300;
+    margin: 0 0 12px 0;
+    letter-spacing: 0.08em;
+    color: var(--border-color);
 }
 
-.subtitle {
-    font-size: 0.9rem;
-    color: #a0aec0;
-    margin-bottom: 30px;
+.tagline {
+    font-size: 0.95rem;
+    color: #475569;
+    margin-bottom: 32px;
     line-height: 1.6;
 }
 
 .form-group {
     display: flex;
-    gap: 10px;
+    flex-direction: column;
+    gap: 12px;
 }
 
-/* 入力ボックス */
 #text-input {
-    flex: 1;
-    padding: 14px 20px;
+    width: 100%;
+    padding: 16px 20px;
     font-size: 15px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    background: rgba(255, 255, 255, 0.05);
-    color: white;
-    border-radius: 30px;
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
     outline: none;
-    transition: all 0.3s;
+    background: #ffffff;
+    font-family: inherit;
+    transition: all 0.2s ease;
 }
 
 #text-input:focus {
-    border-color: #4ea8de;
-    background: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 0 10px rgba(78, 168, 222, 0.5);
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.2);
 }
 
-/* 流すボタン */
 #send-btn {
-    padding: 14px 28px;
-    font-size: 15px;
-    background: linear-gradient(135deg, #4ea8de, #56cfe1);
-    color: #12161a;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    background: var(--border-color);
+    color: #ffffff;
     border: none;
-    border-radius: 30px;
+    border-radius: 16px;
     cursor: pointer;
-    font-weight: bold;
-    transition: all 0.3s;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    box-shadow: 4px 4px 0px var(--accent-orange);
 }
 
 #send-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(86, 207, 225, 0.4);
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px var(--accent-orange);
 }
 
-/* 説明文のセクション（下にスクロールすると現れる） */
+#send-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px var(--accent-orange);
+}
+
+/* 説明セクション（手紙のような質感） */
 .about-section {
     min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 60px 20px;
-    box-sizing: border-box;
-    background: linear-gradient(to bottom, transparent, rgb(10, 12, 15));
 }
 
-.content-box {
-    max-width: 700px;
-    background: rgba(26, 25, 36, 0.9);
-    padding: 40px;
-    border-radius: 16px;
-    border: 1px solid rgba(255, 255, 255, 0);
-    line-height: 1.8;
-    color: #cbd5e0;
+.letter-box {
+    background: #ffffff;
+    border: 2px solid var(--border-color);
+    border-radius: 20px;
+    padding: 45px 40px;
+    max-width: 620px;
+    width: 100%;
+    line-height: 1.9;
+    box-shadow: 6px 6px 0px rgba(0,0,0,0.06);
 }
 
-.content-box h2 {
-    font-size: 2rem;
-    color: #56cfe1;
+.letter-box h2 {
+    font-size: 1.6rem;
     margin-top: 0;
-    font-weight: 400;
-}
-
-.content-box h3 {
-    font-size: 1.3rem;
-    color: #ffffff;
-    margin-top: 40px;
-    border-left: 3px solid #4ea8de;
-    padding-left: 12px;
+    color: var(--border-color);
+    border-bottom: 2px stroke var(--border-color);
 }
 
 .lead {
-    font-size: 1.1rem;
-    color: #ffffff;
-    font-weight: bold;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #334155;
 }
 
 .divider {
-    border: none;
-    border-top: 1px solid rgba(255, 255, 255, 0);
+    height: 2px;
+    background: #e2e8f0;
     margin: 30px 0;
 }
 
-strong {
-    color: #ffcf56; /* 数字などの強調を目立たせる */
+.content-block h3 {
+    font-size: 1.15rem;
+    color: var(--border-color);
+    margin-top: 25px;
+    position: relative;
+    padding-left: 14px;
 }
 
-/* 流れるテキスト（雨）のスタイル */
-.flowing-text {
+.content-block h3::before {
+    content: '';
     position: absolute;
-    white-space: nowrap;
-    font-size: 20px; /* 少しスマートなサイズに変更 */
-    font-weight: bold;
-    color: rgba(255, 255, 255, 0.65); /* 少し透けさせて雨感を演出 */
-    text-shadow: 0 2px 8px rgba(0,0,0,0.5);
-    will-change: transform;
-    animation: moveDown linear forwards;
+    left: 0;
+    top: 6px;
+    width: 6px;
+    height: 18px;
+    background: var(--accent-blue);
+    border-radius: 3px;
 }
 
-@keyframes moveDown {
+.footer-note {
+    margin-top: 40px;
+    padding: 15px 20px;
+    background: #f8fafc;
+    border-radius: 12px;
+    font-size: 0.88rem;
+    color: #64748b;
+    text-align: center;
+}
+
+/* 雨のように降る愚痴要素 */
+.rain-item {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #ffffff;
+    border: 2px solid var(--border-color);
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 700;
+    box-shadow: 4px 4px 0px var(--border-color);
+    white-space: nowrap;
+    animation: dropDown linear forwards;
+    will-change: transform;
+}
+
+.rain-shape {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+@keyframes dropDown {
     0% {
-        transform: translateY(-100%);
+        transform: translateY(-100px);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
     }
     100% {
-        transform: translateY(100vh);
+        transform: translateY(105vh);
+        opacity: 0;
     }
 }
